@@ -100,8 +100,6 @@ public final class Main extends JavaPlugin implements Listener {
                     String UUID = entry.getKey();
                     int timeleft = cooldowns.get(UUID);
 
-                    getServer().getConsoleSender().sendMessage(ChatColor.RED + UUID);
-
                     if (timeleft <= 0) {
                         iterator.remove();
                         continue;
