@@ -1,6 +1,7 @@
 package me.silathar.Modules;
 
 import me.silathar.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
@@ -9,12 +10,82 @@ import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Methods implements Listener {
 
     private Main plugin = Main.getPlugin(Main.class);
 
-    public boolean isSamePart(Player player, Player otherPlayer) {
+    //Getters
+    public String getClass(Player player) {
+        return plugin.getConfig().getString("Users." + player.getUniqueId() + ".Class");
+    }
+    public String getStatusEffect(Player player, String status) {
+        return plugin.getConfig().getString("Users." + player.getUniqueId() + "."+status);
+    }
+
+    //Setters
+    public void resetConfig(Player player) {
+        plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nResetting "+player.getName()+"'s config");
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Name", player.getName());
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Class" , "None");
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Race", "None");
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Stunned", false);
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Slowed", false);
+        plugin.saveConfig();
+    }
+
+    public void setConfig(Player player) {
+        plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nSetting "+player.getName()+"'s config");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "Setting " + player.getName() + "'s config");
+        plugin.getConfig().set("Users." + player.getUniqueId(), player);
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Name", player.getName());
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Class" , "None");
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Kills" , 0);
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Deaths" , 0);
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Race", "None");
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Stunned", false);
+        plugin.getConfig().set("Users." + player.getUniqueId() + ".Slowed", false);
+        plugin.saveConfig();
+    }
+
+
+    //Class Items
+    public boolean hasItemInHand(Player player, Material material) {
+        Material mainHand = player.getInventory().getItemInMainHand().getType();
+
+        if (mainHand.equals(material)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean hasItemInOffHand(Player player, Material material) {
+        Material mainHand = player.getInventory().getItemInOffHand().getType();
+
+        if (mainHand.equals(material)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public void hasResourceType(Player player, ItemStack itemStack, int amount) {
+        if (player.getInventory().containsAtLeast(itemStack, amount)) {
+            for (ItemStack item : player.getInventory().getContents()) {
+                if (item.equals(itemStack)) {
+                    item.setAmount(item.getAmount()-amount);
+                }
+            }
+        } else {
+            player.sendMessage(ChatColor.RED + "You dont have enough " + itemStack.getType() + " to use this ability!");
+        }
+    }
+
+    //Party
+
+    public boolean isSameParty(Player player, Player otherPlayer) {
         String party1 = getPartyName(player);
         String party2 = getPartyName(otherPlayer);
 
@@ -156,6 +227,7 @@ public class Methods implements Listener {
         return false;
     }
 
+    //Nearby Functions
     public ArrayList<String> getNearbyParty(Player player, int Distance) {
         ArrayList<String> nearbyPlayers = new ArrayList<String>();
 
@@ -174,39 +246,6 @@ public class Methods implements Listener {
         return nearbyPlayers;
     }
 
-    public boolean hasItemInHand(Player player, Material material) {
-        Material mainHand = player.getInventory().getItemInMainHand().getType();
 
-        if (mainHand.equals(material)) {
-            return true;
-        }
 
-        return false;
-    }
-
-    public boolean hasItemInOffHand(Player player, Material material) {
-        Material mainHand = player.getInventory().getItemInOffHand().getType();
-
-        if (mainHand.equals(material)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public void hasResourceType(Player player, ItemStack itemStack, int amount) {
-        if (player.getInventory().containsAtLeast(itemStack, amount)) {
-            for (ItemStack item : player.getInventory().getContents()) {
-                if (item.equals(itemStack)) {
-                    item.setAmount(item.getAmount()-amount);
-                }
-            }
-        } else {
-            player.sendMessage(ChatColor.RED + "You dont have enough " + itemStack.getType() + " to use this ability!");
-        }
-    }
-
-    public String getClass(Player player) {
-        return plugin.getConfig().getString("Users." + player.getUniqueId() + ".Class");
-    }
 }

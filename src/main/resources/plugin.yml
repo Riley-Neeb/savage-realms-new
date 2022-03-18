@@ -3,33 +3,35 @@ version: '${project.version}'
 main: me.silathar.Main
 api-version: 1.18
 commands:
-  setclass:
-    description: Set yourself to one of the many classes.
-    usage: /setclass [ClassName]
-  setrace:
-    description: Set your current race
-    usage: /setrace [Race]
-  class:
-    description: Look at your current class.
-    usage: /class
-  race:
-    description: Look at your current clas.
-    usage: /race
   setconfig:
     description: Set's a users config in case it didn't load properly.
     usage: /setconfig
-  party:
-    description: Party options.
-    usage: /party
+  resetconfig:
+    description: Reset's only a users essential config(like no kills or deaths) in case it didn't load properly.
+    usage: /resetconfig
+  cleanup:
+    description: Clean up ground items.
+    usage: /cleanup
   heal:
     description: Heal yourself.
     usage: /heal
   feed:
     description: Feed yourself.
     usage: /feed
-  cleanup:
-    description: Clean up ground items.
-    usage: /cleanup
-  item:
-    description: give a plugin item.
-    usage: /item itemName
+  class:
+    description: Look at your current class.
+    usage: /class
+  race:
+    description: Look at your current clas.
+    usage: /race
+  setclass:
+    description: Set yourself to one of the many classes.
+    usage: /setclass [ClassName]
+  setrace:
+    description: Set your current race
+    usage: /setrace [Race]
+  party:
+    description: Party options.
+    usage: /party
+
+

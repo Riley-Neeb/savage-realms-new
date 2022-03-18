@@ -1,12 +1,14 @@
 package me.silathar;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 
 import me.silathar.Classes.None;
 import me.silathar.Classes.Warrior;
 import me.silathar.Modules.Commands;
 import me.silathar.Modules.Events;
-import me.silathar.Modules.PartySystem;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -19,21 +21,21 @@ import net.md_5.bungee.api.ChatColor;
 public final class Main extends JavaPlugin implements Listener {
 
     private static Plugin plugin;
-    public HashMap<String, Integer> cooldowns = new HashMap<String, Integer>();
-    public HashMap<String, Boolean> invisList = new HashMap<String, Boolean>();
-    public HashMap<String[], String> parties = new HashMap<String[], String>();
-    public HashMap<String, Integer> outgoingInvites = new HashMap<String, Integer>();
+    public HashMap<String, Integer> cooldowns = new HashMap<>();
+    public HashMap<String, Integer> outgoingInvites = new HashMap<>();
+    public HashMap<String[], String> parties = new HashMap<>();
 
     public int masterCD;
 
     @Override
     public void onEnable() {
-        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nExoria Realms has Initialized");
+        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nSavage Realms has Initialized");
         getServer().getPluginManager().registerEvents(new Events(), this);
         //CLASSES
         getServer().getPluginManager().registerEvents(new None(), this);
         getServer().getPluginManager().registerEvents(new Warrior(), this);
         //COMMANDS
+        this.getCommand("setconfig").setExecutor(new Commands());
         this.getCommand("resetconfig").setExecutor(new Commands());
         this.getCommand("cleanup").setExecutor(new Commands());
         this.getCommand("heal").setExecutor(new Commands());
@@ -42,18 +44,18 @@ public final class Main extends JavaPlugin implements Listener {
         this.getCommand("race").setExecutor(new Commands());
         this.getCommand("setclass").setExecutor(new Commands());
         this.getCommand("setrace").setExecutor(new Commands());
+        this.getCommand("party").setExecutor(new Commands());
 
-        this.getCommand("party").setExecutor(new PartySystem());
         //SETTINGS
         cooldowns.clear();
-        invisList.clear();
         outgoingInvites.clear();
         plugin = this;
-        checkRunnable();
+        gameLoop();
         loadConfig();
 
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            player.sendMessage(ChatColor.AQUA + "Server has been reloaded!");
+            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "\n\nSavage Realms has reloaded! Stuff may break. Restart if so.");
+            player.sendMessage(ChatColor.AQUA + "Savage Realms has reloaded! Stuff may break. Restart if so.");
 
             for (Player otherPlayers : Bukkit.getServer().getOnlinePlayers()) {
                 if (player.isInvisible()) {
@@ -66,7 +68,7 @@ public final class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        getServer().getConsoleSender().sendMessage(ChatColor.RED + "\n\nSilathar's Speedrun Gamemode has Uninitialized");
+        getServer().getConsoleSender().sendMessage(ChatColor.RED + "\n\nSavage Realms has Uninitialized");
         loadConfig();
         reloadConfig();
     }
@@ -76,7 +78,8 @@ public final class Main extends JavaPlugin implements Listener {
         saveConfig();
     }
 
-    public void checkRunnable() {
+    public void gameLoop() {
+        final Iterator<Map.Entry<String, Integer>> it = cooldowns.entrySet().iterator();
 
         new BukkitRunnable() {
             //COOLDOWNS SYSTEM
@@ -86,30 +89,48 @@ public final class Main extends JavaPlugin implements Listener {
                     return;
                 }
 
-                if (cooldowns.keySet() != null) {
-                    for (String uuid: cooldowns.keySet()) {
-                        int timeLeft = cooldowns.get(uuid);
+                final Iterator<Map.Entry<String, Integer>> iterator = cooldowns.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    //COOLDOWNS
+                    final Map.Entry<String, Integer> entry = iterator.next();
 
-                        if (timeLeft < 1) {
-                            cooldowns.remove(uuid);
-                        } else {
-                            cooldowns.put(uuid, timeLeft - 1);
-                        }
+                    //UUID = ClassName + AbilityName + PlayerUUID
+                    //EXAMPLE: NoneAbility1 UUID (yes theres a space between uuid and abilityname)
+
+                    String UUID = entry.getKey();
+                    int timeleft = cooldowns.get(UUID);
+
+                    getServer().getConsoleSender().sendMessage(ChatColor.RED + UUID);
+
+                    if (timeleft <= 0) {
+                        iterator.remove();
+                        continue;
                     }
+
+                    entry.setValue(timeleft - 1);
+                    //SNEAK
+                    //for (Player toHide : Bukkit.getServer().getOnlinePlayers()) {
+                        //for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+
+                        //}
+                    //}
+
+
                 }
             }
 
         }.runTaskTimer(this, 0, 20);
 
-        new BukkitRunnable() {
-            //COOLDOWNS SYSTEM
+        /*
+         new BukkitRunnable() {
+            //Invis SYSTEM
             @SuppressWarnings("deprecation")
             @Override
             public void run() {
                 for (Player toHide : Bukkit.getServer().getOnlinePlayers()) {
                     for (Player player : Bukkit.getServer().getOnlinePlayers()) {
                         //SNEAK/ASSASSIN
-                        String SneakUUID = toHide.getUniqueId()+"Sneak";
+
 
                         if (cooldowns.containsKey(SneakUUID)) {
                             int sneakLeft = cooldowns.get(SneakUUID);
@@ -132,11 +153,40 @@ public final class Main extends JavaPlugin implements Listener {
                     }
                 }
             }
+          }.runTaskTimer(this, 0, 20);
+         */
+
+
+
+
+        new BukkitRunnable() {
+            //PARTIES/INVITES SYSTEM
+            @Override
+            public void run() {
+                if (outgoingInvites.isEmpty()) {
+                    return;
+                }
+
+                final Iterator<Map.Entry<String, Integer>> iterator = outgoingInvites.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    final Map.Entry<String, Integer> entry = iterator.next();
+
+                    String UUID = entry.getKey();
+                    int timeleft = outgoingInvites.get(UUID);
+
+                    if (timeleft <= 0) {
+                        iterator.remove();
+                        continue;
+                    }
+
+                    entry.setValue(timeleft - 1);
+                }
+            }
 
         }.runTaskTimer(this, 0, 20);
 
         new BukkitRunnable() {
-            //PARTIES/INVITES SYSTEM
+
             @Override
             public void run() {
                 if (outgoingInvites.isEmpty()) {

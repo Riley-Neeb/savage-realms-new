@@ -23,23 +23,34 @@ import net.md_5.bungee.api.ChatColor;
 public class Commands implements Listener, CommandExecutor {
 
     private Main plugin = Main.getPlugin(Main.class);
+    Methods methods = new Methods();
+    PartyMethods partyMethods = new PartyMethods();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player) {
 
+            if (command.getName().equalsIgnoreCase("setconfig")) {
+                if (args.length == 0) {
+                    Player player = (Player) sender;
+                    methods.setConfig(player);
+                }
+            }
+
             if (command.getName().equalsIgnoreCase("resetconfig")) {
-                Player player = (Player) sender;
+                if (args.length == 0) {
+                    Player player = (Player) sender;
+                    methods.resetConfig(player);
+                } else {
+                    for (Player playerOnline : Bukkit.getServer().getOnlinePlayers()) {
+                        if (Bukkit.getPlayer(args[0]).getName() == playerOnline.getName()) {
+                            playerOnline.sendMessage(ChatColor.GREEN+sender.getName()+" /reset your config!");
+                            sender.sendMessage(ChatColor.YELLOW+"You reset "+playerOnline.getName()+"'s config");
 
-                Bukkit.broadcastMessage(ChatColor.YELLOW + "Resetting " + player.getName() + "'s config");
-                plugin.getConfig().set("Users." + player.getUniqueId(), player);
-                plugin.getConfig().set("Users." + player.getUniqueId() + ".Name", player.getName());
-                plugin.getConfig().set("Users." + player.getUniqueId() + ".Class" , "None");
-                plugin.getConfig().set("Users." + player.getUniqueId() + ".Kills" , 0);
-                plugin.getConfig().set("Users." + player.getUniqueId() + ".Deaths" , 0);
-                plugin.getConfig().set("Users." + player.getUniqueId() + ".Race", "None");
-
-                plugin.saveConfig();
+                            methods.resetConfig(playerOnline);
+                        }
+                    }
+                }
             }
 
             if (command.getName().equalsIgnoreCase("cleanup")) {
@@ -100,7 +111,11 @@ public class Commands implements Listener, CommandExecutor {
                     return true;
                 }
 
-                if (args[0].equalsIgnoreCase("Berserker")) { //100%
+                if (args[0].equalsIgnoreCase("None")) { //0
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "None");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "None");
+
+                } else if (args[0].equalsIgnoreCase("Berserker")) { //100%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Berserker");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Berserker");
 
@@ -114,7 +129,21 @@ public class Commands implements Listener, CommandExecutor {
                     };
                     player.getInventory().addItem(items);
 
+                } else if (args[0].equalsIgnoreCase("Warrior")) { //100%
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Warrior");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Warrior");
 
+                    player.getInventory().clear();
+                    ItemStack[] items = {
+                            new ItemStack(Material.FEATHER, 1),
+                            new ItemStack(Material.IRON_SWORD, 1),
+
+                            new ItemStack(Material.IRON_HELMET, 1),
+                            new ItemStack(Material.IRON_CHESTPLATE, 1),
+                            new ItemStack(Material.IRON_LEGGINGS, 1),
+                            new ItemStack(Material.IRON_BOOTS, 1),
+                    };
+                    player.getInventory().addItem(items);
                 } else if (args[0].equalsIgnoreCase("Gladiator")) { //100%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Gladiator");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Gladiator");
@@ -344,7 +373,42 @@ public class Commands implements Listener, CommandExecutor {
                 }
             }
 
+            if (command.getName().equalsIgnoreCase("party")) {
+                Player player = (Player) sender;
+
+                //0 = no subCommand
+                //1 = subCommand
+                //2+ = playerName or party name
+
+                if (args.length == 0) {
+                    partyMethods.partyInfo(player);
+                    return true;
+                }
+
+                if (args[0].equalsIgnoreCase("Invite")) {
+                    partyMethods.partyInvite(player, args);
+
+                } else if (args[0].equalsIgnoreCase("Accept")) {
+                    partyMethods.partyAccept(player, args);
+
+                } else if (args[0].equalsIgnoreCase("Disband")) {
+                    partyMethods.partyDisband(player);
+
+                } else if (args[0].equalsIgnoreCase("Leave")) {
+                    partyMethods.partyLeave(player);
+
+                } else if (args[0].equalsIgnoreCase("Create")) {
+                    player.sendMessage(""+args.length);
+                    partyMethods.partyCreate(player, args);
+
+                } else if (args[0].equalsIgnoreCase("info")) {
+                    partyMethods.partyInfo(player);
+
+                } else if (args[0].equalsIgnoreCase("transfer")) {
+
+                }
+            }
+
         } return true;
     }
-
 }
