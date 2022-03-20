@@ -1,6 +1,7 @@
 package me.silathar.Classes;
 
 import me.silathar.Main;
+import me.silathar.Modules.Classes;
 import me.silathar.Modules.Methods;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -11,7 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class None implements Listener {
+public class None extends Classes implements Listener {
 
     public Main plugin = Main.getPlugin(Main.class);
     Methods methods = new Methods();
@@ -21,7 +22,7 @@ public class None implements Listener {
     String ability2Name = "Ability 2";
     String ability3Name = "Ability 3";
 
-    Material scroll_item = Material.PAPER;
+    Material scroll_item = Material.WOODEN_SWORD;
     Material ability1_material = Material.PAPER; //Ability1
     Material ability2_material = Material.PAPER; //Ability2
     Material ability3_material = Material.PAPER; //Ability3

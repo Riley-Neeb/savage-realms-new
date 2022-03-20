@@ -115,6 +115,26 @@ public class Commands implements Listener, CommandExecutor {
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "None");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "None");
 
+                } else if (args[0].equalsIgnoreCase("Warrior")) { //100%
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Warrior");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Warrior");
+
+                    player.getInventory().clear();
+                    ItemStack[] items = {
+                            new ItemStack(Material.SUGAR, 64),
+                            new ItemStack(Material.PAPER, 64),
+                            new ItemStack(Material.REDSTONE, 64),
+
+                            new ItemStack(Material.FLINT, 1),
+                            new ItemStack(Material.IRON_SWORD, 1),
+
+                            new ItemStack(Material.IRON_HELMET, 1),
+                            new ItemStack(Material.IRON_CHESTPLATE, 1),
+                            new ItemStack(Material.IRON_LEGGINGS, 1),
+                            new ItemStack(Material.IRON_BOOTS, 1),
+                    };
+
+                    player.getInventory().addItem(items);
                 } else if (args[0].equalsIgnoreCase("Berserker")) { //100%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Berserker");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Berserker");
@@ -124,23 +144,10 @@ public class Commands implements Listener, CommandExecutor {
                     ItemStack[] items = {
                             new ItemStack(Material.DIAMOND_AXE, 1),
                             new ItemStack(Material.ROTTEN_FLESH, 1),
-                            new ItemStack(Material.LEATHER_CHESTPLATE, 1),
-                            new ItemStack(Material.LEATHER_LEGGINGS, 1),
-                    };
-                    player.getInventory().addItem(items);
-
-                } else if (args[0].equalsIgnoreCase("Warrior")) { //100%
-                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Warrior");
-                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Warrior");
-
-                    player.getInventory().clear();
-                    ItemStack[] items = {
-                            new ItemStack(Material.FEATHER, 1),
-                            new ItemStack(Material.IRON_SWORD, 1),
 
                             new ItemStack(Material.IRON_HELMET, 1),
-                            new ItemStack(Material.IRON_CHESTPLATE, 1),
-                            new ItemStack(Material.IRON_LEGGINGS, 1),
+                            new ItemStack(Material.LEATHER_CHESTPLATE, 1),
+                            new ItemStack(Material.LEATHER_LEGGINGS, 1),
                             new ItemStack(Material.IRON_BOOTS, 1),
                     };
                     player.getInventory().addItem(items);
