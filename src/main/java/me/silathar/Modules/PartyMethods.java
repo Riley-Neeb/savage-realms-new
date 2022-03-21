@@ -81,7 +81,9 @@ public class PartyMethods implements Listener {
     }
 
     public void partyInfo(Player player) {
-        if (methods.getPartyName(player) == null) {
+        PlayerUser playerUser = Main.players.get(player);
+
+        if (playerUser.getPartyName(player) == null) {
             player.sendMessage(ChatColor.RED + "You cant check party info if you're not in a party!");
             return;
         }
@@ -104,7 +106,9 @@ public class PartyMethods implements Listener {
     }
 
     public void partyLeave(Player player) {
-        if (methods.getPartyName(player) == null) {
+        PlayerUser playerUser = Main.players.get(player);
+
+        if (playerUser.getPartyName(player) == null) {
             player.sendMessage(ChatColor.RED + "You cant leave if you're not in a party!");
             return;
         }
@@ -127,7 +131,9 @@ public class PartyMethods implements Listener {
     }
 
     public void partyDisband(Player player) {
-        if (methods.getPartyName(player) == null) {
+        PlayerUser playerUser = Main.players.get(player);
+
+        if (playerUser.getPartyName(player) == null) {
             player.sendMessage(ChatColor.RED + "You cant disband if you're not in a party!");
             return;
         }
@@ -151,7 +157,9 @@ public class PartyMethods implements Listener {
     }
 
     public void partyInvite(Player player, String[] args) {
-        if (methods.getPartyName(player) == null) {
+        PlayerUser playerUser = Main.players.get(player);
+
+        if (playerUser.getPartyName(player) == null) {
             player.sendMessage(ChatColor.RED + "You cant invite if you're not in a party!");
             return;
         }

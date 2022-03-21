@@ -30,6 +30,14 @@ public final class Main extends JavaPlugin implements Listener {
 
     public int masterCD;
 
+    public ChatColor allyColor = ChatColor.LIGHT_PURPLE;
+    public ChatColor enemyColor = ChatColor.YELLOW;
+    public ChatColor successColor = ChatColor.GREEN;
+    public ChatColor errorColor = ChatColor.RED;
+    public ChatColor abilityUseColor = ChatColor.GOLD;
+    public ChatColor abilityNameColor = ChatColor.BLUE;
+    public ChatColor stunColor = ChatColor.DARK_BLUE;
+
     @Override
     public void onEnable() {
         getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nSavage Realms has Initialized");

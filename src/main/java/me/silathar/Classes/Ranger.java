@@ -3,98 +3,88 @@ package me.silathar.Classes;
 import me.silathar.Main;
 import me.silathar.Modules.Classes;
 import me.silathar.Modules.Methods;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
+import me.silathar.Modules.PlayerUser;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 public class Ranger extends Classes implements Listener {
 
     public Main plugin = Main.getPlugin(Main.class);
-    Methods methods = new Methods();
 
     String armorType = "Leather";
     String ability1Name = "Leap";
-    String ability2Name = "Temposhot";
-    String ability3Name = "Pestilent Arrow";
+    String ability2Name = "Quick Dash";
+    String ability3Name = "Tri Shot";
 
     Material scroll_item = Material.FEATHER;
-    Material ability1_material = Material.SUGAR;    //Healing
-    Material ability2_material = Material.SUGAR;    //Injection
-    Material ability3_material = Material.REDSTONE; //Lethal Tempo
+    Material ability1_material = Material.SUGAR;
+    Material ability2_material = Material.SUGAR;
+    Material ability3_material = Material.REDSTONE;
 
-    private int currentAbility = 1;
     private int maxAbility = 4;
 
-    private int ability1CD = 3;
-    private int ability2CD = 3;
-    private int ability3CD = 3;
-    private String ReadiedAbility = "None";
+    private int ability1CD = 15;
+    private int ability2CD = 2;
+    private int ability3CD = 7;
+
     String className = this.getClass().getSimpleName();
 
-    public Integer returnAbility(Player player) {
-        return currentAbility;
-    }
-    public String returnReadiedAbility(Player player) {
-        return ReadiedAbility;
-    }
-
     public void fireAbility(Player player) {
-        boolean hasItem            = (methods.hasItemInHand(player, scroll_item));
-        boolean wearingRightArmor  = (methods.isWearingArmorType(player, armorType));
+        PlayerUser playerUser = Main.players.get(player);
+        boolean hasItem = (playerUser.hasItemInHand(player, scroll_item));
+        boolean wearingRightArmor = (playerUser.isWearingArmorType(player, armorType));
 
-        if (hasItem) {
-            if (wearingRightArmor) {
-                if (currentAbility == 1) {
-                    boolean hasEnoughResources = (methods.hasResourceType(player, ability1_material, 2));
-
-                    if (hasEnoughResources) {
+        if (hasItem && wearingRightArmor) {
+            if (playerUser.hasItemInHand(player, scroll_item)) {
+                if (playerUser.isWearingArmorType(player, armorType)) {
+                    if (playerUser.getCurrentAbility() == 1) {
                         ability1(player);
-                        methods.setResourceAmount(player, ability1_material, 2);
-                    } else {
-                        player.sendMessage(ChatColor.RED + "You don't have enough resources!");
-                    }
-                } else if (currentAbility == 2) {
-                    boolean hasEnoughResources = (methods.hasResourceType(player, ability2_material, 2));
 
-                    if (hasEnoughResources) {
+                    } else if (playerUser.getCurrentAbility() == 2) {
                         ability2(player);
-                        methods.setResourceAmount(player, ability2_material, 2);
-                    }
-                } else if (currentAbility == 3) {
-                    boolean hasEnoughResources = (methods.hasResourceType(player, ability3_material, 2));
-
-                    if (hasEnoughResources) {
-                        ability3(player);
-                        methods.setResourceAmount(player, ability3_material, 2);
+                        playerUser.setReadiedAbility("None");
+                    } else if (playerUser.getCurrentAbility() == 3) {
+                        return;
                     }
                 }
-            } else {
-                player.sendMessage(ChatColor.RED + "You're not wearing the right armor1");
             }
         }
     }
 
     public void scrollAbility(Player player) {
-        if (methods.hasItemInHand(player, scroll_item)) {
-            if (currentAbility < maxAbility) {
-                currentAbility += 1;
+        PlayerUser playerUser = Main.players.get(player);
 
-                if (currentAbility == maxAbility) {
-                    currentAbility = 1;
+        if (playerUser.hasItemInHand(player, scroll_item)) {
+            if (playerUser.getCurrentAbility() < maxAbility) {
+                playerUser.addCurrentAbility();
+
+                if (playerUser.getCurrentAbility() == maxAbility) {
+                    playerUser.setCurrentAbility(1);
                 }
 
-                if (currentAbility == 1) {
-                    player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability1Name + ChatColor.AQUA +" | 1");
-                } else if (currentAbility == 2) {
-                    player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability2Name + ChatColor.AQUA +" | 2");
-                } else if (currentAbility == 3) {
-                    player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability3Name + ChatColor.AQUA +" | 3");
+                if (playerUser.getCurrentAbility() == 1) {
+                    player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability1Name);
+                    player.playSound(player.getLocation(), Sound.ENTITY_COW_MILK, 2F, 1F);
+                    playerUser.setReadiedAbility("None");
+
+                } else if (playerUser.getCurrentAbility() == 2) {
+                    player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability2Name);
+                    player.playSound(player.getLocation(), Sound.ENTITY_COW_MILK, 2F, 1F);
+                    playerUser.setReadiedAbility("None");
+
+                } else if (playerUser.getCurrentAbility() == 3) {
+                    player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability3Name);
+                    player.playSound(player.getLocation(), Sound.ENTITY_COW_MILK, 2F, 1F);
+                    playerUser.setReadiedAbility("Tri Shot");
                 }
             }
         }
@@ -102,14 +92,20 @@ public class Ranger extends Classes implements Listener {
 
     public void ability1(Player player) {
         String ability1UUID = className + ability1Name + player.getUniqueId();
-        String abilityUse = ChatColor.AQUA + "You have used " + ChatColor.RED + ChatColor.BOLD + ability1Name+"!";
+        String abilityUse = ChatColor.GOLD + "You have used " + ChatColor.BLUE + ChatColor.BOLD + ability1Name+"!";
+        PlayerUser playerUser = Main.players.get(player);
 
         if (!plugin.cooldowns.containsKey(ability1UUID)) {
             plugin.masterCD = ability1CD;
             plugin.cooldowns.put(ability1UUID, plugin.masterCD);
-            player.sendMessage(ChatColor.AQUA + ability1Name + "!");
+            player.sendMessage(abilityUse);
 
+            Vector dir = player.getEyeLocation().getDirection();
+            Vector vec = new Vector(dir.getX() * 1.8D, 1D, dir.getZ() * 1.6D);
 
+            player.sendMessage(ChatColor.BLUE + "You have used " + ChatColor.GOLD + "leap!");
+            player.setVelocity(vec);
+            playerUser.setLeaping(player, true);
         } else {
             player.sendMessage(ChatColor.RED + ability1Name + " On cooldown, " + ChatColor.YELLOW + plugin.cooldowns.get(ability1UUID) + " seconds" + ChatColor.RED + " left.");
         }
@@ -117,12 +113,17 @@ public class Ranger extends Classes implements Listener {
 
     public void ability2(Player player) {
         String ability2UUID = className + ability2Name + player.getUniqueId();
-        String abilityUse = ChatColor.AQUA + "You have used " + ChatColor.RED + ChatColor.BOLD + ability2Name+"!";
+        String abilityUse = ChatColor.GOLD + "You have used " + ChatColor.BLUE + ChatColor.BOLD + ability2Name+"!";
+        PlayerUser playerUser = Main.players.get(player);
 
         if (!plugin.cooldowns.containsKey(ability2UUID)) {
             plugin.masterCD = ability2CD;
             plugin.cooldowns.put(ability2UUID, plugin.masterCD);
-            player.sendMessage(ChatColor.AQUA + ability2Name + "!");
+            player.sendMessage(abilityUse);
+
+            Vector dir = player.getEyeLocation().getDirection();
+            Vector vec = new Vector(dir.getX() * 1D, 0D, dir.getZ() * 1.8D);
+            player.setVelocity(vec);
 
         } else {
             player.sendMessage(ChatColor.RED + ability2Name + " On cooldown, " + ChatColor.YELLOW + plugin.cooldowns.get(ability2UUID) + " seconds" + ChatColor.RED + " left.");
@@ -131,34 +132,27 @@ public class Ranger extends Classes implements Listener {
 
     public void ability3(Player player) {
         String ability3UUID = className + ability3Name + player.getUniqueId();
-        String abilityUse = ChatColor.AQUA + "You have used " + ChatColor.RED + ChatColor.BOLD + ability3Name+"!";
+        String abilityUse = ChatColor.GOLD + "You have used " + ChatColor.BLUE + ChatColor.BOLD + ability3Name+"!";
+        PlayerUser playerUser = Main.players.get(player);
 
         if (!plugin.cooldowns.containsKey(ability3UUID)) {
             plugin.masterCD = ability3CD;
             plugin.cooldowns.put(ability3UUID, plugin.masterCD);
-            player.sendMessage(ChatColor.AQUA + ability3Name + "!");
+            player.sendMessage(abilityUse);
 
-            double baseAttackSpeed = 4.0;
-            double modifiedAttackSpeed = 8.0;
-            int seconds = 4;
+            World world = player.getWorld();
+            Location loc = player.getLocation();
 
-            new BukkitRunnable() {
-                int i = 0;
+            Vector lookDir = player.getEyeLocation().getDirection();
 
-                @Override
-                public void run() {
-                    i++;
+            Float drawStrength = (float) playerUser.getArrowSpeed();
 
-                    player.sendMessage("" + modifiedAttackSpeed);
-                    player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(modifiedAttackSpeed);
+            Projectile arrow2 = world.spawnArrow(loc.clone().add(0.25,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow3 = world.spawnArrow(loc.clone().add(-0.25,1.5,0), lookDir, drawStrength, 0);
+            playerUser.setResourceAmount(player, Material.ARROW, 2);
 
-                    if (i == seconds) {
-                        this.cancel();
-                        player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(baseAttackSpeed);
-                    }
-                }
-
-            }.runTaskTimer(plugin, 0, 20);
+            arrow2.setMetadata("Pestilent Arrow", new FixedMetadataValue(plugin, true));
+            arrow3.setMetadata("Poison Arrow", new FixedMetadataValue(plugin, true));
 
         } else {
             player.sendMessage(ChatColor.RED + ability3Name + " On cooldown, " + ChatColor.YELLOW + plugin.cooldowns.get(ability3UUID) + " seconds" + ChatColor.RED + " left.");
