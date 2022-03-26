@@ -6,17 +6,16 @@ import me.silathar.Classes.Warrior;
 import me.silathar.Main;
 import me.silathar.Classes.None;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -24,12 +23,44 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 public class Events implements Listener {
 
     private Main plugin = Main.getPlugin(Main.class);
+    Methods methods = new Methods();
+    FactionMethods factionMethods = new FactionMethods();
 
     private int currentAbility = 0;
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        PlayerUser playerUser = Main.players.get(player);
+        Material classItem = playerUser.getClassItem();
+
+        if (event.getBlock().getType().equals(classItem)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent event) {
+        Player player = (Player) event.getPlayer();
+        PlayerUser playerUser = Main.players.get(player);
+
+        if (playerUser.getClass(player).equals("Scout")) {
+            player.setWalkSpeed((float) 0.4);
+        }
+
+        if (playerUser.isStunned(player)) {
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED+"You're stunned, you cant move!");
+        }
+    }
+
 
     @EventHandler(priority= EventPriority.HIGH)
     private void onPlayerUse(PlayerInteractEvent event){
@@ -41,9 +72,10 @@ public class Events implements Listener {
             return;
         }
 
-        if(event.getItem() == null) {
+        if (event.getItem() == null) {
             return;
         }
+
 
         if(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
             playerUser.playerClass.scrollAbility(player);
@@ -80,19 +112,8 @@ public class Events implements Listener {
     }
 
     @EventHandler
-    public void EntityDamageEntity(PlayerMoveEvent event) {
-        Player player = (Player) event.getPlayer();
-        PlayerUser playerUser = Main.players.get(player);
-
-        if (playerUser.isStunned(player)) {
-            event.setCancelled(true);
-            player.sendMessage(ChatColor.RED+"You're stunned, you cant move!");
-        }
-    }
-
-    @EventHandler
     public void EntityDamageEntity(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Projectile) {
+        if (event.getCause() == DamageCause.PROJECTILE){
             Projectile proj = (Projectile) event.getDamager();
 
             if (proj.getShooter() instanceof Player) {
@@ -101,87 +122,125 @@ public class Events implements Listener {
                 PlayerUser playerUser = Main.players.get(shooter);
                 PlayerUser entityUser = Main.players.get(entity);
 
-                if (event.getCause() == DamageCause.PROJECTILE) {
-                    if (playerUser.isSameParty(shooter, entity)) {
+                if (factionMethods.isSameFaction(shooter, entity)) {
+                    event.setCancelled(true);
+                    shooter.sendMessage(ChatColor.RED+"Can't hurt a friendly player!");
+                } else {
+                    double multiplier = 1;
+                    int addedDamage = 0;
+
+                    if (playerUser.didArrowHeadshot(proj, shooter, entity)) {
+                        double distance = shooter.getLocation().distance(entity.getLocation());
+
+                        if (distance <= 25) {
+                            multiplier = 1.25;
+                        } else if (distance >= 25 && distance <= 50) {
+                            multiplier = 1.5;
+                        } else if (distance >= 50 && distance <= 100) {
+                            multiplier = 2;
+                        } else if (distance >= 100 && distance <= 150) {
+                            multiplier = 3;
+                        } else if (distance >= 150) {
+                            multiplier = 5;
+                        }
+
+                        shooter.sendMessage(ChatColor.GOLD+"You got a headshot! | Multiplier: "+multiplier+"x");
+                    }
+
+                    if (proj.hasMetadata("Pestilent Arrow")) {
+                        Location loc = entity.getLocation();
+
+                        loc.setPitch(entityUser.getMinMax(entity, -90, 90)); //min of -90 and max of 90
+                        loc.setYaw(entityUser.getMinMax(entity, 0, 360)); //min of -90 and max of 90
+                        entity.teleport(loc);
+                    }
+
+                    if (proj.hasMetadata("Poison Arrow")) {
+                        entity.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 20, 2));
+                    }
+
+                    if (proj.hasMetadata("bonusDamage1")) {
+                        event.setDamage(event.getDamage()+1);
+                    } else if (proj.hasMetadata("bonusDamage2")) {
+                        event.setDamage(event.getDamage()+2);
+                    } else if (proj.hasMetadata("bonusDamage3")) {
+                        event.setDamage(event.getDamage()+3);
+                    } else if (proj.hasMetadata("bonusDamage4")) {
+                        event.setDamage(event.getDamage()+4);
+                    }
+
+                    event.setDamage((event.getDamage()+addedDamage)*multiplier);
+                }
+            }
+        } else {
+            if (event.getEntity() instanceof Player) {
+                if (event.getDamager() instanceof Player) {
+                    Player entity = (Player) event.getEntity();
+                    PlayerUser entityUser = Main.players.get(entity);
+
+                    Player damager = (Player) event.getDamager();
+                    PlayerUser damagerUser = Main.players.get(damager);
+                    String damagerClass = damagerUser.getClass(damager);
+
+
+                    if (factionMethods.isSameFaction(damager, entity)) {
                         event.setCancelled(true);
-                        shooter.sendMessage(ChatColor.RED+"Can't hurt a friendly player!");
+                        return;
                     } else {
-                        double multiplier = 1;
-                        int addedDamage = 0;
 
-                        if (playerUser.didArrowHeadshot(proj, shooter, entity)) {
-                            double distance = shooter.getLocation().distance(entity.getLocation());
+                        if (entityUser.getLinkedPlayer() != null) {
+                            event.setCancelled(true);
+                            Player linkedEntity = entityUser.getLinkedPlayer();
 
-                            if (distance <= 25) {
-                                multiplier = 1.25;
-                            } else if (distance >= 25 && distance <= 50) {
-                                multiplier = 1.5;
-                            } else if (distance >= 50 && distance <= 100) {
-                                multiplier = 2;
-                            } else if (distance >= 100 && distance <= 150) {
-                                multiplier = 3;
-                            } else if (distance >= 150) {
-                                multiplier = 5;
+                            entityUser.damagePlayer(entity, event.getDamage()/2);
+                            entityUser.damagePlayer(linkedEntity, event.getDamage()/2);
+
+                            entity.sendMessage(ChatColor.GREEN+"Your damage was shared with your link!");
+                            linkedEntity.sendMessage(ChatColor.GREEN+"Your damage was shared with your link!");
+                        }
+
+                        if (damagerUser.isStunned(damager)) {
+                            event.setCancelled(true);
+                            damager.sendMessage(ChatColor.RED+"You can't attack, you're stunned!");
+                            return;
+                        }
+
+                        if (damagerClass.equals("Berserker")) {
+                            if (damagerUser.getReadiedAbility().equals("Headbutt")) {
+                                damagerUser.playerClass.ability1(damager, entity);
+                            }
+                        } else if (damagerClass.equals("Assassin")) {
+                            double multiplier = 1;
+
+                            if (damagerUser.getReadiedAbility().equals("Ankle Cutter")) {
+                                damagerUser.playerClass.ability1(damager, entity);
+                            } else if (damagerUser.getReadiedAbility().equals("Flicker")) {
+                                damagerUser.playerClass.ability2(damager, entity);
                             }
 
-                            shooter.sendMessage(ChatColor.GOLD+"You got a headshot! | Multiplier: "+multiplier+"x");
-                        }
+                            double dot = damagerUser.getDotVector(damager, entity);
+                            if (dot > 0.5) {
+                                damager.sendMessage(ChatColor.GOLD+"Backstab!");
+                                multiplier = multiplier*2.5;
+                            }
 
-                        if (proj.hasMetadata("Pestilent Arrow")) {
-                            Location loc = entity.getLocation();
+                            if (damagerUser.isVanished()) {
+                                damagerUser.setVanished(false);
+                                damagerUser.showPlayer(damager);
+                                damager.removePotionEffect(PotionEffectType.INVISIBILITY);
+                                damager.sendMessage(ChatColor.GOLD+"First Strike!");
+                                multiplier = multiplier*1.5;
+                            }
 
-                            loc.setPitch(entityUser.getMinMax(entity, -90, 90)); //min of -90 and max of 90
-                            loc.setYaw(entityUser.getMinMax(entity, 0, 360)); //min of -90 and max of 90
-                            entity.teleport(loc);
-                        }
-
-                        if (proj.hasMetadata("bonusDamage1")) {
-                            event.setDamage(event.getDamage()+1);
-                        } else if (proj.hasMetadata("bonusDamage2")) {
-                            event.setDamage(event.getDamage()+2);
-                        } else if (proj.hasMetadata("bonusDamage3")) {
-                            event.setDamage(event.getDamage()+3);
-                        } else if (proj.hasMetadata("bonusDamage4")) {
-                            event.setDamage(event.getDamage()+4);
-                        }
-
-                        event.setDamage((event.getDamage()+addedDamage)*multiplier);
-                    }
-                }
-            }
-        }
-
-        if (event.getEntity() instanceof Player) {
-            if (event.getDamager() instanceof Player) {
-                Player entity = (Player) event.getEntity();
-                PlayerUser entityUser = Main.players.get(entity);
-
-                Player damager = (Player) event.getDamager();
-                PlayerUser damagerUser = Main.players.get(damager);
-                String damagerClass = damagerUser.getClass(damager);
-
-
-                String entityClass = entityUser.getClass(entity);
-
-
-                if (damagerUser.isSameParty(damager, entity)) {
-                    event.setCancelled(true);
-                    return;
-                } else {
-                    if (damagerUser.isStunned(damager)) {
-                        event.setCancelled(true);
-                        damager.sendMessage(ChatColor.RED+"You can't attack, you're stunned!");
-                        return;
-                    }
-
-                    if (damagerClass.equals("Berserker")) {
-                        if (damagerUser.getReadiedAbility().equals("Headbutt")) {
-                            damagerUser.playerClass.ability1(damager, entity);
+                            event.setDamage(event.getDamage()*multiplier);
+                        } else if (damagerClass.equals("Scout")) {
+                            if (damagerUser.getReadiedAbility().equals("Bat to The Face!")) {
+                                damagerUser.playerClass.ability1(damager, entity);
+                            }
                         }
                     }
                 }
             }
-
         }
     }
 
@@ -198,7 +257,7 @@ public class Events implements Listener {
                 int bonusDamage = playerUser.rangerBonusDMG(shooter, proj);
                 proj.setMetadata("bonusDamage"+bonusDamage, new FixedMetadataValue(plugin, true));
 
-                if (playerUser.getReadiedAbility().equals("Tri Shot")) {
+                if (playerUser.getReadiedAbility().equals("Multi Shot")) {
                     playerUser.arrowSpeed = proj.getVelocity().length(); //Hacky way of getting the draw of the bow
                     playerUser.playerClass.ability3(shooter);
                 }
@@ -234,6 +293,19 @@ public class Events implements Listener {
         }
     }
 
+    public void onEntityInteractEntity(PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        PlayerUser playerUser = Main.players.get(player);
+        String className = playerUser.getClass(player);
+
+        if (event.getRightClicked().getType().equals(EntityType.PLAYER)) {
+            Player clickedPlayer = (Player) event.getRightClicked();
+
+            if (className.equals("Guardian")) {
+                playerUser.playerClass.ability1(player, clickedPlayer);
+            }
+        }
+    }
     @EventHandler
     public void onDied(PlayerDeathEvent event) {
         if (event.getEntity() instanceof Player) {
@@ -255,25 +327,13 @@ public class Events implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        PlayerUser playerUser = Main.players.get(player);
-
         plugin.players.put(player, new PlayerUser(player));
 
-        boolean hasPlayed = player.hasPlayedBefore();
-        if (hasPlayed) {
-            for (Player toHide : Bukkit.getServer().getOnlinePlayers()) {
-                for (Player players : Bukkit.getServer().getOnlinePlayers()) {
-                    if (toHide.isInvisible()) {
-                        players.showPlayer(plugin, toHide);
-                        toHide.sendMessage(ChatColor.YELLOW+"Rejoined invisible, set to visible.");
-                        players.sendMessage(ChatColor.YELLOW+toHide.getName()+" Rejoined invisible, set to visible.");
-                    }
-                }
-            }
-        } else {
-            playerUser.setConfig(player);
-        }
+        player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(40);
 
+        if (!player.hasPlayedBefore()) {
+            methods.setConfig(player);
+        }
     }
 
     @EventHandler
@@ -285,6 +345,12 @@ public class Events implements Listener {
     @EventHandler
     public void playerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
+        PlayerUser playerUser = Main.players.get(player);
+        playerUser.resetCurrentActiveActiveAbilities();
+
+        if (playerUser.getClass(player).equals("Scout")) {
+            player.setWalkSpeed((float) 0.4);
+        }
 
         player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(40);
     }

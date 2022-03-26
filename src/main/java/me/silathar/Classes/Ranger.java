@@ -23,12 +23,9 @@ public class Ranger extends Classes implements Listener {
     String armorType = "Leather";
     String ability1Name = "Leap";
     String ability2Name = "Quick Dash";
-    String ability3Name = "Tri Shot";
+    String ability3Name = "Multi Shot";
 
     Material scroll_item = Material.FEATHER;
-    Material ability1_material = Material.SUGAR;
-    Material ability2_material = Material.SUGAR;
-    Material ability3_material = Material.REDSTONE;
 
     private int maxAbility = 4;
 
@@ -43,19 +40,17 @@ public class Ranger extends Classes implements Listener {
         boolean hasItem = (playerUser.hasItemInHand(player, scroll_item));
         boolean wearingRightArmor = (playerUser.isWearingArmorType(player, armorType));
 
-        if (hasItem && wearingRightArmor) {
-            if (playerUser.hasItemInHand(player, scroll_item)) {
-                if (playerUser.isWearingArmorType(player, armorType)) {
-                    if (playerUser.getCurrentAbility() == 1) {
-                        ability1(player);
-
-                    } else if (playerUser.getCurrentAbility() == 2) {
-                        ability2(player);
-                        playerUser.setReadiedAbility("None");
-                    } else if (playerUser.getCurrentAbility() == 3) {
-                        return;
-                    }
+        if (hasItem) {
+            if (wearingRightArmor) {
+                if (playerUser.getCurrentAbility() == 1) {
+                    ability1(player);
+                } else if (playerUser.getCurrentAbility() == 2) {
+                    ability2(player);
+                } else if (playerUser.getCurrentAbility() == 3) {
+                    return;
                 }
+            } else {
+                player.sendMessage(ChatColor.RED+"You're not wearing the right armor!");
             }
         }
     }
@@ -84,7 +79,7 @@ public class Ranger extends Classes implements Listener {
                 } else if (playerUser.getCurrentAbility() == 3) {
                     player.sendMessage(ChatColor.GREEN + "You ready your " + ChatColor.YELLOW + ability3Name);
                     player.playSound(player.getLocation(), Sound.ENTITY_COW_MILK, 2F, 1F);
-                    playerUser.setReadiedAbility("Tri Shot");
+                    playerUser.setReadiedAbility("Multi Shot");
                 }
             }
         }
@@ -103,7 +98,6 @@ public class Ranger extends Classes implements Listener {
             Vector dir = player.getEyeLocation().getDirection();
             Vector vec = new Vector(dir.getX() * 1.8D, 1D, dir.getZ() * 1.6D);
 
-            player.sendMessage(ChatColor.BLUE + "You have used " + ChatColor.GOLD + "leap!");
             player.setVelocity(vec);
             playerUser.setLeaping(player, true);
         } else {
@@ -147,12 +141,18 @@ public class Ranger extends Classes implements Listener {
 
             Float drawStrength = (float) playerUser.getArrowSpeed();
 
-            Projectile arrow2 = world.spawnArrow(loc.clone().add(0.25,1.5,0), lookDir, drawStrength, 0);
-            Projectile arrow3 = world.spawnArrow(loc.clone().add(-0.25,1.5,0), lookDir, drawStrength, 0);
-            playerUser.setResourceAmount(player, Material.ARROW, 2);
+            Projectile arrow1 = world.spawnArrow(loc.clone().add(1,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow2 = world.spawnArrow(loc.clone().add(0.75,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow3 = world.spawnArrow(loc.clone().add(0.5,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow4 = world.spawnArrow(loc.clone().add(0.25,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow5 = world.spawnArrow(loc.clone().add(0,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow6 = world.spawnArrow(loc.clone().add(-0.25,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow7 = world.spawnArrow(loc.clone().add(-0.5,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow8 = world.spawnArrow(loc.clone().add(-0.75,1.5,0), lookDir, drawStrength, 0);
+            Projectile arrow9 = world.spawnArrow(loc.clone().add(-1,1.5,0), lookDir, drawStrength, 0);
 
-            arrow2.setMetadata("Pestilent Arrow", new FixedMetadataValue(plugin, true));
-            arrow3.setMetadata("Poison Arrow", new FixedMetadataValue(plugin, true));
+            playerUser.setResourceAmount(player, Material.ARROW, 9);
+
 
         } else {
             player.sendMessage(ChatColor.RED + ability3Name + " On cooldown, " + ChatColor.YELLOW + plugin.cooldowns.get(ability3UUID) + " seconds" + ChatColor.RED + " left.");

@@ -3,10 +3,7 @@ package me.silathar.Modules;
 import java.util.Arrays;
 import java.util.List;
 
-import me.silathar.Classes.Berserker;
-import me.silathar.Classes.None;
-import me.silathar.Classes.Ranger;
-import me.silathar.Classes.Warrior;
+import me.silathar.Classes.*;
 import me.silathar.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -28,6 +25,7 @@ public class Commands implements Listener, CommandExecutor {
 
     private Main plugin = Main.getPlugin(Main.class);
     PartyMethods partyMethods = new PartyMethods();
+    Methods methods = new Methods();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -37,21 +35,21 @@ public class Commands implements Listener, CommandExecutor {
             if (command.getName().equalsIgnoreCase("setconfig")) {
                 if (args.length == 0) {
                     Player player = (Player) sender;
-                    playerUser.setConfig(player);
+                    methods.setConfig(player);
                 }
             }
 
             if (command.getName().equalsIgnoreCase("resetconfig")) {
                 if (args.length == 0) {
                     Player player = (Player) sender;
-                    playerUser.resetConfig(player);
+                    methods.resetConfig(player);
                 } else {
                     for (Player playerOnline : Bukkit.getServer().getOnlinePlayers()) {
                         if (Bukkit.getPlayer(args[0]).getName() == playerOnline.getName()) {
                             playerOnline.sendMessage(ChatColor.GREEN+sender.getName()+" /reset your config!");
                             sender.sendMessage(ChatColor.YELLOW+"You reset "+playerOnline.getName()+"'s config");
 
-                            playerUser.resetConfig(playerOnline);
+                            methods.resetConfig(playerOnline);
                         }
                     }
                 }
@@ -109,6 +107,7 @@ public class Commands implements Listener, CommandExecutor {
             if (command.getName().equalsIgnoreCase("setclass")) {
                 Player player = (Player) sender;
                 player.setWalkSpeed(0.2F);
+                playerUser.resetCurrentActiveActiveAbilities();
 
                 if (args.length < 1) {
                     player.sendMessage(ChatColor.RED + "You need to include a class name.");
@@ -181,6 +180,7 @@ public class Commands implements Listener, CommandExecutor {
                 } else if (args[0].equalsIgnoreCase("Bard")) { //100%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Bard");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Bard");
+                    playerUser.setClass(new Bard());
 
                     player.getInventory().clear();
                     ItemStack[] items = {
@@ -194,9 +194,28 @@ public class Commands implements Listener, CommandExecutor {
                     };
                     player.getInventory().addItem(items);
 
+                } else if (args[0].equalsIgnoreCase("Assassin")) { //100%
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Assassin");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Assassin");
+                    playerUser.setClass(new Assassin());
+
+                    player.getInventory().clear();
+                    ItemStack[] items = {
+                            new ItemStack(Material.GHAST_TEAR, 1),
+
+                            new ItemStack(Material.LEATHER_HELMET, 1),
+                            new ItemStack(Material.LEATHER_CHESTPLATE, 1),
+                            new ItemStack(Material.LEATHER_LEGGINGS, 1),
+                            new ItemStack(Material.LEATHER_BOOTS, 1),
+
+                            new ItemStack(Material.DIAMOND_SWORD, 1),
+                    };
+                    player.getInventory().addItem(items);
+
                 } else if (args[0].equalsIgnoreCase("Priest")) { //100%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Priest");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Priest");
+                    playerUser.setClass(new Priest());
 
                     player.getInventory().clear();
                     ItemStack[] items = {
@@ -208,6 +227,61 @@ public class Commands implements Listener, CommandExecutor {
                             new ItemStack(Material.IRON_LEGGINGS, 1),
                             new ItemStack(Material.IRON_BOOTS, 1),
                     };
+                    player.getInventory().addItem(items);
+
+                } else if (args[0].equalsIgnoreCase("Guardian")) { //100%
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Guardian");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Guardian");
+                    playerUser.setClass(new Guardian());
+
+                    player.getInventory().clear();
+                    ItemStack[] items = {
+                            new ItemStack(Material.DIAMOND_SWORD, 1),
+                            new ItemStack(Material.SHIELD, 1),
+                            new ItemStack(Material.IRON_INGOT, 1),
+
+                            new ItemStack(Material.DIAMOND_HELMET, 1),
+                            new ItemStack(Material.DIAMOND_CHESTPLATE, 1),
+                            new ItemStack(Material.DIAMOND_LEGGINGS, 1),
+                            new ItemStack(Material.DIAMOND_BOOTS, 1),
+                    };
+                    player.getInventory().addItem(items);
+
+                } else if (args[0].equalsIgnoreCase("Scout")) { //0%
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Scout");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Scout");
+                    playerUser.setClass(new Scout());
+
+                    player.getInventory().clear();
+                    ItemStack[] items = {
+                            new ItemStack(Material.DIAMOND_SWORD, 1),
+                            new ItemStack(Material.STICK, 1),
+
+                            new ItemStack(Material.GOLDEN_HELMET, 1),
+                            new ItemStack(Material.IRON_CHESTPLATE, 1),
+                            new ItemStack(Material.IRON_LEGGINGS, 1),
+                            new ItemStack(Material.GOLDEN_BOOTS, 1),
+                    };
+
+                    player.getInventory().addItem(items);
+
+                } else if (args[0].equalsIgnoreCase("ChaosCrusader")) { //0%
+                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Chaos Crusader");
+                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "ChaosCrusader");
+                    playerUser.setClass(new ChaosCrusader());
+
+                    player.getInventory().clear();
+                    ItemStack[] items = {
+                            new ItemStack(Material.DIAMOND_SWORD, 1),
+                            new ItemStack(Material.RAW_GOLD, 1),
+
+                            new ItemStack(Material.DIAMOND_HELMET, 1),
+                            new ItemStack(Material.DIAMOND_CHESTPLATE, 1),
+                            new ItemStack(Material.DIAMOND_LEGGINGS, 1),
+                            new ItemStack(Material.DIAMOND_BOOTS, 1),
+
+                    };
+
                     player.getInventory().addItem(items);
                 } else if (args[0].equalsIgnoreCase("Gladiator")) { //100%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Gladiator");
@@ -244,22 +318,7 @@ public class Commands implements Listener, CommandExecutor {
                     };
                     player.getInventory().addItem(items);
 
-                } else if (args[0].equalsIgnoreCase("Assassin")) { //100%
-                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Assassin");
-                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Assassin");
 
-                    player.getInventory().clear();
-                    ItemStack[] items = {
-                            new ItemStack(Material.GHAST_TEAR, 1),
-
-                            new ItemStack(Material.LEATHER_HELMET, 1),
-                            new ItemStack(Material.LEATHER_CHESTPLATE, 1),
-                            new ItemStack(Material.LEATHER_LEGGINGS, 1),
-                            new ItemStack(Material.LEATHER_BOOTS, 1),
-
-                            new ItemStack(Material.DIAMOND_SWORD, 1),
-                    };
-                    player.getInventory().addItem(items);
 
 
                 } else if (args[0].equalsIgnoreCase("Gatherer")) { //100%
@@ -295,24 +354,6 @@ public class Commands implements Listener, CommandExecutor {
 
                     player.getInventory().addItem(items);
 
-                } else if (args[0].equalsIgnoreCase("Scout")) { //0%
-                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Scout");
-                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "Scout");
-
-                    player.getInventory().clear();
-                    ItemStack[] items = {
-                            new ItemStack(Material.GOLDEN_HELMET, 1),
-                            new ItemStack(Material.IRON_CHESTPLATE, 1),
-                            new ItemStack(Material.IRON_LEGGINGS, 1),
-                            new ItemStack(Material.GOLDEN_BOOTS, 1),
-
-                            new ItemStack(Material.DIAMOND_SWORD, 1),
-                            new ItemStack(Material.TROPICAL_FISH, 1),
-                            new ItemStack(Material.PUFFERFISH, 1),
-                    };
-
-                    player.getInventory().addItem(items);
-
                 } else if (args[0].equalsIgnoreCase("MartialArtist")) { //0%
                     player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Martial Artist");
                     plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "MartialArtist");
@@ -321,23 +362,6 @@ public class Commands implements Listener, CommandExecutor {
                     ItemStack[] items = {
 
                             new ItemStack(Material.STICK, 1),
-                    };
-
-                    player.getInventory().addItem(items);
-
-                } else if (args[0].equalsIgnoreCase("ChaosCrusader")) { //0%
-                    player.sendMessage(ChatColor.GOLD + "Your class is now: " + ChatColor.GOLD + "Chaos Crusader");
-                    plugin.getConfig().set("Users." + player.getUniqueId() + ".Class", "ChaosCrusader");
-
-                    player.getInventory().clear();
-                    ItemStack[] items = {
-                            new ItemStack(Material.GOLDEN_SWORD, 1),
-
-                            new ItemStack(Material.DIAMOND_HELMET, 1),
-                            new ItemStack(Material.DIAMOND_CHESTPLATE, 1),
-                            new ItemStack(Material.DIAMOND_LEGGINGS, 1),
-                            new ItemStack(Material.DIAMOND_BOOTS, 1),
-
                     };
 
                     player.getInventory().addItem(items);

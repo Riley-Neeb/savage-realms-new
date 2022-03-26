@@ -2,6 +2,7 @@ package me.silathar.Classes;
 
 import me.silathar.Main;
 import me.silathar.Modules.Classes;
+import me.silathar.Modules.FactionMethods;
 import me.silathar.Modules.Methods;
 import me.silathar.Modules.PlayerUser;
 import org.bukkit.ChatColor;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 public class Priest extends Classes implements Listener {
 
     public Main plugin = Main.getPlugin(Main.class);
+    FactionMethods factionMethods = new FactionMethods();
 
     String armorType = "Leather";
     String ability1Name = "Spell of Healing";
@@ -44,17 +46,17 @@ public class Priest extends Classes implements Listener {
         boolean hasItem = (playerUser.hasItemInHand(player, scroll_item));
         boolean wearingRightArmor = (playerUser.isWearingArmorType(player, armorType));
 
-        if (hasItem && wearingRightArmor) {
-            if (playerUser.hasItemInHand(player, scroll_item)) {
-                if (playerUser.isWearingArmorType(player, armorType)) {
-                    if (playerUser.getCurrentAbility() == 1) {
-                        ability1(player);
-                    } else if (playerUser.getCurrentAbility() == 2) {
-                        ability2(player);
-                    } else if (playerUser.getCurrentAbility() == 3) {
-                        ability3(player);
-                    }
+        if (hasItem) {
+            if (wearingRightArmor) {
+                if (playerUser.getCurrentAbility() == 1) {
+                    ability1(player);
+                } else if (playerUser.getCurrentAbility() == 2) {
+                    ability2(player);
+                } else if (playerUser.getCurrentAbility() == 3) {
+                    ability3(player);
                 }
+            } else {
+                player.sendMessage(ChatColor.RED+"You're not wearing the right armor!");
             }
         }
     }
@@ -101,7 +103,7 @@ public class Priest extends Classes implements Listener {
             for (Entity entity : List) {
                 Player otherPlayer = (Player) entity;
 
-                if (playerUser.isSameParty(player, otherPlayer)) {
+                if (factionMethods.isSameFaction(player, otherPlayer)) {
                     otherPlayer.setHealth(otherPlayer.getHealth()+10.0);
                     otherPlayer.sendMessage(ChatColor.GREEN + player.getName() + ChatColor.GOLD + " healed you!");
                     player.sendMessage(ChatColor.GREEN + "You've healed " + ChatColor.LIGHT_PURPLE + otherPlayer.getName() + "!");
@@ -130,13 +132,16 @@ public class Priest extends Classes implements Listener {
             for (Entity entity : List) {
                 Player otherPlayer = (Player) entity;
 
-                if (playerUser.isSameParty(player, otherPlayer)) {
+                if (factionMethods.isSameFaction(player, otherPlayer)) {
                     otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.HEALTH_BOOST, 300, 1));
+                    otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 40, 2));
                     otherPlayer.sendMessage(plugin.allyColor + player.getName() + plugin.abilityUseColor + " has sanctified you");
                     player.sendMessage(plugin.abilityUseColor + "You've sanctified " + plugin.allyColor + otherPlayer.getName() + "!");
                 } else {
                     otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 300, 1));
+                    otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 60, 1));
                     player.sendMessage(ChatColor.GREEN + "You've sanctified " + plugin.enemyColor + otherPlayer.getName() + "!");
+                    otherPlayer.sendMessage(ChatColor.GRAY + "You feel the presence of eyes wash over you... ");
                 }
             }
         } else {
@@ -158,10 +163,10 @@ public class Priest extends Classes implements Listener {
             for (Entity entity : List) {
                 Player otherPlayer = (Player) entity;
 
-                if (playerUser.isSameParty(player, otherPlayer)) {
+                if (factionMethods.isSameFaction(player, otherPlayer)) {
                     otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.HEALTH_BOOST, 300, 1));
                 } else {
-                    otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 300, 1));
+                    otherPlayer.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 200, 5));
                     player.sendMessage(ChatColor.GREEN + "You've sanctified " + ChatColor.RED + otherPlayer.getName() + "!");
                 }
             }

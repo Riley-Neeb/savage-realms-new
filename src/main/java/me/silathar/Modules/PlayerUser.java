@@ -4,19 +4,21 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
 
-import me.silathar.Classes.Berserker;
-import me.silathar.Classes.None;
-import me.silathar.Classes.Ranger;
-import me.silathar.Classes.Warrior;
+import me.silathar.Classes.*;
 import me.silathar.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -28,9 +30,14 @@ public class PlayerUser implements Listener {
     UUID uuid;
     String className;
     Classes playerClass;
+    Material classItem;
 
     Integer currentAbility = 1;
+    Integer currentActiveAbilities = 0;
     String readiedAbility = "None";;
+    Player linkedPlayer;
+    Boolean isVanished = false;
+
     double arrowSpeed;
 
     public PlayerUser(Player player) {
@@ -38,12 +45,26 @@ public class PlayerUser implements Listener {
         this.uuid = player.getUniqueId();
         this.className = getClass(player);
 
+        //Make sure class is in here AND Commands /setclass
         if (className.equals("Warrior")) {
             this.playerClass = new Warrior();
         } else if (className.equals("Berserker")) {
             this.playerClass = new Berserker();
         } else if (className.equals("Ranger")) {
             this.playerClass = new Ranger();
+        } else if (className.equals("Bard")) {
+            this.playerClass = new Bard();
+        } else if (className.equals("Priest")) {
+            this.playerClass = new Priest();
+        } else if (className.equals("Scout")) {
+            this.playerClass = new Scout();
+        } else if (className.equals("Assassin")) {
+            this.playerClass = new Assassin();
+        } else if (className.equals("ChaosCrusader")) {
+            this.playerClass = new ChaosCrusader();
+        } else if (className.equals("Guardian")) {
+            this.playerClass = new Guardian();
+
         } else {
             this.playerClass = new None();
         }
@@ -53,9 +74,34 @@ public class PlayerUser implements Listener {
         return this.playerClass;
     }
 
-
-
     //Getters
+    public void resetCurrentActiveActiveAbilities() {
+        this.currentActiveAbilities = 0;
+    }
+    public int getCurrentActiveAbilities() {
+        return this.currentActiveAbilities;
+    }
+
+    public void addActiveAbility(int seconds) {
+        this.currentActiveAbilities += 1;
+
+        new BukkitRunnable() {
+            int i = 0;
+
+            @Override
+            public void run() {
+                i++;
+
+                if (i >= seconds) {
+                    cancel();
+                    currentActiveAbilities -= 1;
+                    player.sendMessage(ChatColor.GREEN + "You can use another ability!");
+                }
+            }
+
+        }.runTaskTimer(plugin, 0, 20);
+    }
+
     public int getCurrentAbility() {
         return this.currentAbility;
     }
@@ -66,6 +112,12 @@ public class PlayerUser implements Listener {
         this.currentAbility = value;
     }
 
+    public Boolean isVanished() {
+        return this.isVanished;
+    }
+    public void setVanished(boolean state) {
+        this.isVanished = state;
+    }
 
     public String getReadiedAbility() {
         return this.readiedAbility;
@@ -78,12 +130,23 @@ public class PlayerUser implements Listener {
         this.playerClass = newClass;
     }
 
-    public double getArrowSpeed() {
-        return this.arrowSpeed;
+    public Material getClassItem() {
+        return this.classItem;
     }
 
-    public void setArrowSpeed(Double amount) {
-        this.arrowSpeed = amount;
+    public void setClassItem(Material material) {
+        this.classItem = material;
+    }
+
+    public Player getLinkedPlayer() {
+        return this.linkedPlayer;
+    }
+    public void setLinkedPlayer(Player player) {
+        this.linkedPlayer = player;
+    }
+
+    public double getArrowSpeed() {
+        return this.arrowSpeed;
     }
     //Methods
     public void stunForDuration(Player player, int seconds) {
@@ -106,6 +169,10 @@ public class PlayerUser implements Listener {
 
         }.runTaskTimer(plugin, 0, 20);
     }
+
+
+
+
     public boolean getRandomChance(Player player, int threshold) {
         int chance = (int)(Math.random() * 99 + 1);
 
@@ -120,63 +187,22 @@ public class PlayerUser implements Listener {
         return random.nextInt(max + 1 - min) + min;
     }
 
-
-    //Config
-    public void resetConfig(Player player) {
-        plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nResetting "+player.getName()+"'s config");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Name", player.getName());
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Class" , "None");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Race", "None");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Slowed", false);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".isLeaping", false);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".isStunned", false);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Ability", "None");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".currentAbility", 1);
-        plugin.saveConfig();
-
-        this.className = null;
-        this.playerClass = null;
-        this.currentAbility = 1;
-        this.readiedAbility = "None";
-    }
-    public void setConfig(Player player) {
-        plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nSetting "+player.getName()+"'s config");
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "Setting " + player.getName() + "'s config");
-        plugin.getConfig().set("Users." + player.getUniqueId(), player);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Name", player.getName());
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Class" , "None");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Kills" , 0);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Deaths" , 0);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Race", "None");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Slowed", false);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".isLeaping", false);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".isStunned", false);
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".Ability", "None");
-        plugin.getConfig().set("Users." + player.getUniqueId() + ".currentAbility", 1);
-        plugin.saveConfig();
-
-        this.className = null;
-        this.playerClass = null;
-        this.currentAbility = 1;
-        this.readiedAbility = "None";
-    }
-    public String setConfigValue(Player player, String nameOfValue, Object value) {
-        if (value instanceof Integer) {
-            int checkedValue = (int) value;
-
-            plugin.getConfig().set("Users." + player.getUniqueId() + "."+nameOfValue, value);
-        } else if (value instanceof Boolean) {
-            boolean checkedValue = (boolean) value;
-
-            plugin.getConfig().set("Users." + player.getUniqueId() + "."+nameOfValue, checkedValue);
-        } else if (value instanceof String) {
-            String checkedValue = (String) value;
-
-            plugin.getConfig().set("Users." + player.getUniqueId() + "."+nameOfValue, checkedValue);
+    public boolean isPositiveNumber(int num) {
+        if (num > 0) {
+            return true;
+        } else if (num < 0) {
+            return false;
         }
 
-        return "None";
+        return false;
     }
+
+    public double getDotVector(Player player, Player otherPlayer) {
+        Vector damagerEye = player.getEyeLocation().getDirection();
+        Vector entityEye = otherPlayer.getEyeLocation().getDirection();
+        return damagerEye.normalize().dot(entityEye);
+    }
+
 
 
     public int getKills(Player player) {
@@ -187,6 +213,9 @@ public class PlayerUser implements Listener {
     }
     public String getClass(Player player) {
         return plugin.getConfig().getString("Users." + player.getUniqueId() + ".Class");
+    }
+    public void setClassName(Player player) {
+        this.className = getClass(player);
     }
     public Boolean isStunned(Player player) {
         if (plugin.getConfig().getBoolean("Users." + player.getUniqueId() + ".isStunned") == true) {
@@ -275,7 +304,12 @@ public class PlayerUser implements Listener {
 
         return null;
     }
+
     public boolean isInParty(Player player) {
+        for (String[] PartiesByLeader: plugin.parties.keySet()) {
+            plugin.getServer().getConsoleSender().sendMessage(PartiesByLeader);
+        }
+
         for (String[] PartiesByLeader: plugin.parties.keySet()) {
             for(int i = 0; i < PartiesByLeader.length; i++){
                 if (PartiesByLeader[i].equals(player.getName())) {
@@ -285,6 +319,31 @@ public class PlayerUser implements Listener {
         }
 
         return false;
+    }
+
+    public boolean hasIntersection(Vector3D p1, Vector3D p2, Vector3D min, Vector3D max) {
+        final double epsilon = 0.0001f;
+
+        Vector3D d = p2.subtract(p1).multiply(0.5);
+        Vector3D e = max.subtract(min).multiply(0.5);
+        Vector3D c = p1.add(d).subtract(min.add(max).multiply(0.5));
+        Vector3D ad = d.abs();
+
+        if (Math.abs(c.x) > e.x + ad.x)
+            return false;
+        if (Math.abs(c.y) > e.y + ad.y)
+            return false;
+        if (Math.abs(c.z) > e.z + ad.z)
+            return false;
+
+        if (Math.abs(d.y * c.z - d.z * c.y) > e.y * ad.z + e.z * ad.y + epsilon)
+            return false;
+        if (Math.abs(d.z * c.x - d.x * c.z) > e.z * ad.x + e.x * ad.z + epsilon)
+            return false;
+        if (Math.abs(d.x * c.y - d.y * c.x) > e.x * ad.y + e.y * ad.x + epsilon)
+            return false;
+
+        return true;
     }
 
     public boolean isWearingArmorType(Player player, String armorType) {
@@ -309,6 +368,18 @@ public class PlayerUser implements Listener {
                 }
             }
 
+        } else if (armorType.equals("Scout")) {
+            if (Helm != null && Chest != null && Legs != null && Boots != null) {
+                if (Helm.getType().equals(Material.GOLDEN_HELMET)) {
+                    if (Chest.getType().equals(Material.IRON_CHESTPLATE)) {
+                        if (Legs.getType().equals(Material.IRON_LEGGINGS)) {
+                            if (Boots.getType().equals(Material.GOLDEN_BOOTS)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
         } else if (armorType.equals("Mixed")) {
             if (Helm != null && Chest != null && Legs != null && Boots != null) {
                 return true;
@@ -399,31 +470,13 @@ public class PlayerUser implements Listener {
                     return false;
                 }
             }
-
         }
 
-        player.sendMessage(ChatColor.RED+"You're not wearing the right armor!");
         return false;
     }
 
     //Nearby Functions
-    public ArrayList<String> getNearbyParty(Player player, int Distance) {
-        ArrayList<String> nearbyPlayers = new ArrayList<String>();
 
-        for(Entity entity : player.getNearbyEntities(Distance, Distance, Distance)) {
-
-            for (String[] PartiesByLeader: plugin.parties.keySet()) {
-                for(int i = 0; i < PartiesByLeader.length; i++){
-                    if (PartiesByLeader[i] != null && PartiesByLeader[i].equals(entity.getName())) {
-                        nearbyPlayers.add(entity.getName());
-                    }
-                }
-            }
-
-        }
-
-        return nearbyPlayers;
-    }
     public ArrayList<Entity> getNearbyPlayers(Player player, int Distance) {
         ArrayList<Entity> nearbyPlayers = new ArrayList<>();
 
@@ -436,8 +489,73 @@ public class PlayerUser implements Listener {
         return nearbyPlayers;
     }
 
+    //Damage Methods
+    public void damagePlayer(Player player, double damage) {
+        double points = player.getAttribute(Attribute.GENERIC_ARMOR).getValue();
+        double toughness = player.getAttribute(Attribute.GENERIC_ARMOR_TOUGHNESS).getValue();
+        PotionEffect effect = player.getPotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
+        int resistance = effect == null ? 0 : effect.getAmplifier();
+        int epf = getEPF(player);
+
+        player.damage(calculateDamageApplied(damage, points, toughness, resistance, epf));
+    }
+
+    public double calculateDamageApplied(double damage, double points, double toughness, int resistance, int epf) {
+        double withArmorAndToughness = damage * (1 - Math.min(20, Math.max(points / 5, points - damage / (2 + toughness / 4))) / 25);
+        double withResistance = withArmorAndToughness * (1 - (resistance * 0.2));
+        double withEnchants = withResistance * (1 - (Math.min(20.0, epf) / 25));
+        return withEnchants;
+    }
+
+    public static int getEPF(Player player) {
+        PlayerInventory inv = player.getInventory();
+        ItemStack helm = inv.getHelmet();
+        ItemStack chest = inv.getChestplate();
+        ItemStack legs = inv.getLeggings();
+        ItemStack boot = inv.getBoots();
+
+        return (helm != null ? helm.getEnchantmentLevel(Enchantment.DAMAGE_ALL) : 0) +
+                (chest != null ? chest.getEnchantmentLevel(Enchantment.DAMAGE_ALL) : 0) +
+                (legs != null ? legs.getEnchantmentLevel(Enchantment.DAMAGE_ALL) : 0) +
+                (boot != null ? boot.getEnchantmentLevel(Enchantment.DAMAGE_ALL) : 0);
+    }
 
     //Class Methods
+
+
+
+    public void showPlayer(Player player) {
+        for (Player otherPlayers : Bukkit.getServer().getOnlinePlayers()) {
+            otherPlayers.showPlayer(plugin, player);
+        }
+    }
+
+    public void vanishPlayer(Player player, int seconds) {
+        for (Player otherPlayers : Bukkit.getServer().getOnlinePlayers()) {
+            if (otherPlayers != player) {
+                otherPlayers.hidePlayer(plugin, player);
+            }
+        }
+
+        new BukkitRunnable() {
+            int i = 0;
+
+            @Override
+            public void run() {
+                i++;
+
+                if (i == seconds) {
+                    this.cancel();
+                    for (Player otherPlayers : Bukkit.getServer().getOnlinePlayers()) {
+                        if (otherPlayers != player) {
+                            otherPlayers.showPlayer(plugin, player);
+                        }
+                    }
+                }
+            }
+
+        }.runTaskTimer(plugin, 0, 20);
+    }
     public int rangerBonusDMG(Player player, Projectile projectile) {
         ItemStack Helm = player.getInventory().getHelmet();
         ItemStack Chest = player.getInventory().getChestplate();
@@ -480,7 +598,7 @@ public class PlayerUser implements Listener {
     public boolean didArrowHeadshot(Projectile projectile, Player shooter, Player damagedEntity) {
         double y = projectile.getLocation().getY();
         double hitPosition = damagedEntity.getLocation().getY();
-        boolean headshot = y - hitPosition > 1.35d;
+        boolean headshot = y - hitPosition > 1.5d;
 
         if (headshot == true) {
             return true;

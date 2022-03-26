@@ -5,11 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
-import me.silathar.Classes.None;
-import me.silathar.Classes.Warrior;
-import me.silathar.Modules.Commands;
-import me.silathar.Modules.Events;
-import me.silathar.Modules.PlayerUser;
+import me.silathar.Classes.*;
+import me.silathar.Modules.*;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -42,9 +39,16 @@ public final class Main extends JavaPlugin implements Listener {
     public void onEnable() {
         getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "\n\nSavage Realms has Initialized");
         getServer().getPluginManager().registerEvents(new Events(), this);
-        //CLASSES
+        getServer().getPluginManager().registerEvents(new PartyMethods(), this);
+        getServer().getPluginManager().registerEvents(new Methods(), this);
         getServer().getPluginManager().registerEvents(new None(), this);
         getServer().getPluginManager().registerEvents(new Warrior(), this);
+        getServer().getPluginManager().registerEvents(new Berserker(), this);
+        getServer().getPluginManager().registerEvents(new Bard(), this);
+        getServer().getPluginManager().registerEvents(new Ranger(), this);
+        getServer().getPluginManager().registerEvents(new Priest(), this);
+        getServer().getPluginManager().registerEvents(new Assassin(), this);
+
         //COMMANDS
         this.getCommand("setconfig").setExecutor(new Commands());
         this.getCommand("resetconfig").setExecutor(new Commands());
